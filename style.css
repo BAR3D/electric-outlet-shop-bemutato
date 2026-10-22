@@ -464,3 +464,8 @@ body.glass-tiles .advice .ph { position: relative; margin: 18px; border-radius: 
 body.glass-tiles .advice .ph::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: linear-gradient(180deg, rgba(255,244,222,.14), rgba(255,255,255,.02) 45%, rgba(var(--accent-rgb), .06)), linear-gradient(118deg, transparent 30%, rgba(255,255,255,.06) 44%, transparent 58%); }
 @media (max-width: 900px) { body.glass-tiles .advice .ph { min-height: 300px; margin: 14px; } }
+
+/* GYORSÍTÁS (a látvány változatlan): a mozgó rétegek a videókártyán futnak (egyszer rajzolódnak, utána csak mozognak), a képernyőn kívüli kártyák nem rajzolódnak */
+.bg-blob, .sr-spot { will-change: transform; }
+.bg-media > img, .bg-media > video { will-change: transform, opacity; }
+.grid > .card { content-visibility: auto; contain-intrinsic-size: auto 360px; }

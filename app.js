@@ -300,7 +300,7 @@ function showcase(list) {
 const card = p => `
   <article class="card glass">
     ${!p.inStock ? '<span class="badge">Elfogyott</span>' : p.onSale ? '<span class="badge sale">Akció</span>' : ''}
-    <a href="#/termek/${p.slug}" class="card-img"><img src="${pimg(p)}" alt="${esc(p.name)}" loading="lazy"></a>
+    <a href="#/termek/${p.slug}" class="card-img"><img src="${pimg(p)}" alt="${esc(p.name)}" loading="lazy" decoding="async"></a>
     <div class="card-body">
       <span class="card-brand">${esc(p.brand)}</span>
       <a href="#/termek/${p.slug}" class="card-name">${esc(p.name)}</a>
@@ -371,7 +371,7 @@ function home() {
     ${head(num(), L.linesTitle, L.linesSub, '<a class="link-more" href="#/markak">Mind →</a>')}
     <div class="brands">${BRANDS.map(b => { const ps = P.filter(p => p.brand === b.name), li = lineCover(b); return `
       <a class="brand-card glass rv" href="#/marka/${b.k}"><span class="sec-num">${ps.length} ${L_('itemWord', 'termék')}</span><h3>${esc(b.name)}</h3><p>${esc(b.tag)}</p>
-      ${li ? `<div class="brand-cover" style="background-image:url(${li})"></div>` : `<div class="imgs">${ps.slice(0, 5).map(p => `<img src="${pimg(p)}" alt="" loading="lazy">`).join('')}</div>`}</a>`; }).join('')}</div>
+      ${li ? `<div class="brand-cover" style="background-image:url(${li})"></div>` : `<div class="imgs">${ps.slice(0, 5).map(p => `<img src="${pimg(p)}" alt="" loading="lazy" decoding="async">`).join('')}</div>`}</a>`; }).join('')}</div>
   </section>` : ''}
 
   ${C.ritual && C.ritual.steps.length ? `<section class="sec wrap">
@@ -560,7 +560,7 @@ function brandsPage() {
   return `<section class="page wrap"><div class="page-head rv"><span class="sec-num">${C.labels.linesNav}</span><h1>${C.labels.linesTitle}</h1><p>${C.labels.linesSub}</p></div>
     <div class="brands">${BRANDS.map(b => { const ps = lineList(b), li = lineCover(b); return `
       <a class="brand-card glass rv" href="#/marka/${b.k}"><span class="sec-num">${ps.length} ${L_('itemWord', 'termék')}</span><h3>${esc(b.name)}</h3><p>${esc(b.tag)}</p>
-      <div class="imgs">${ps.slice(0, 5).map(p => `<img src="${pimg(p)}" alt="" loading="lazy">`).join('')}</div></a>`; }).join('')}</div></section>`;
+      <div class="imgs">${ps.slice(0, 5).map(p => `<img src="${pimg(p)}" alt="" loading="lazy" decoding="async">`).join('')}</div></a>`; }).join('')}</div></section>`;
 }
 
 function brandPage(k) {
@@ -758,22 +758,26 @@ async function background() {
 /* lebegő fénypontok a háttérben (szín a configból) */
 function sparkle() {
   const c = $('#sparkle'), x = c.getContext('2d');
+  const DPR = Math.min(devicePixelRatio || 1, 2);
   let W, H, dots;
+  // egy fénypont (mag + ragyogás) egyszer megrajzolva; képkockánként csak odamásoljuk – a régi shadowBlur ugyanezt számolta újra pontonként, minden képkockán
+  const spr = document.createElement('canvas'), S = 40; spr.width = spr.height = S; (() => { const g = spr.getContext('2d'), gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    gr.addColorStop(0, `rgba(${C.sparkle},1)`); gr.addColorStop(.16, `rgba(${C.sparkle},.9)`); gr.addColorStop(.38, `rgba(${C.sparkle},.28)`); gr.addColorStop(1, `rgba(${C.sparkle},0)`); g.fillStyle = gr; g.fillRect(0, 0, S, S); })();
   const size = () => {
-    W = c.width = innerWidth * devicePixelRatio; H = c.height = innerHeight * devicePixelRatio;
-    dots = Array.from({ length: Math.round(innerWidth / 18) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: (Math.random() * 1.8 + .4) * devicePixelRatio, v: Math.random() * .25 + .05, p: Math.random() * 6.28 }));
+    W = c.width = innerWidth * DPR; H = c.height = innerHeight * DPR;
+    dots = Array.from({ length: Math.round(innerWidth / 18) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: (Math.random() * 1.8 + .4) * DPR, v: Math.random() * .25 + .05, p: Math.random() * 6.28 }));
   };
   size(); addEventListener('resize', size);
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const tick = t => {
     x.clearRect(0, 0, W, H);
     for (const d of dots) {
-      d.y -= d.v * devicePixelRatio; d.x += Math.sin(t / 2000 + d.p) * .2;
+      d.y -= d.v * DPR; d.x += Math.sin(t / 2000 + d.p) * .2;
       if (d.y < -10) { d.y = H + 10; d.x = Math.random() * W; }
-      const a = .25 + .35 * Math.sin(t / 700 + d.p) ** 2;
-      x.beginPath(); x.arc(d.x, d.y, d.r, 0, 6.28);
-      x.fillStyle = `rgba(${C.sparkle},${a})`; x.shadowColor = `rgba(${C.sparkle},.8)`; x.shadowBlur = 8 * devicePixelRatio; x.fill();
+      const a = .25 + .35 * Math.sin(t / 700 + d.p) ** 2, sz = (d.r * 2 + 16 * DPR) * 1.1;
+      x.globalAlpha = a; x.drawImage(spr, d.x - sz / 2, d.y - sz / 2, sz, sz);
     }
+    x.globalAlpha = 1;
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);

@@ -58,8 +58,13 @@ LAYOUTS.showroom = function () {
   const P = LX2.P().slice(0, 12), N = P.length;
   lx2Start(() => {
     const ring = $('.sr-ring'), stage = $('.sr-stage'), info = $('.sr-info'), items = $$('.sr-it'); if (!ring || !N) return;
-    const R = () => Math.max(300, Math.min(innerWidth * 0.42, 620)) * (N > 8 ? 1.15 : 1);
-    items.forEach((it, i) => it.style.setProperty('--a', (i * 360 / N) + 'deg'));
+    const lts = $$('.sr-lt');   // a megvilágítás külön réteg a csempék mellett (a csempe és a tükörképe így sosem íródik át)
+    let RR = 0; const R = () => RR;
+    const calcR = () => { RR = Math.max(300, Math.min(innerWidth * 0.42, 620)) * (N > 8 ? 1.15 : 1); items.concat(lts).forEach((it) => it.style.setProperty('--r', RR + 'px')); };
+    calcR(); FX.on(window, 'resize', calcR);
+    items.concat(lts).forEach((it, k) => it.style.setProperty('--a', ((k % N) * 360 / N) + 'deg'));
+    let vis = true; if ('IntersectionObserver' in window) { const io = new IntersectionObserver((es) => { vis = es[es.length - 1].isIntersecting; }); io.observe(stage); FX._c.push(() => io.disconnect()); }   // ami nem látszik, nem számolunk rá
+    const litPrev = new Array(N).fill(-1);
     let ang = 0, vel = 0.04, drag = false, lx = 0, moved = 0, front = -1, target = null, pauseUntil = 0;
     const STEP = 360 / N;
     // a nyilak és az infósáv a színpadon belül vannak: ezeken nem indul húzás (különben az egér „elfogása” elnyelné a kattintást)
@@ -71,11 +76,11 @@ LAYOUTS.showroom = function () {
     $$('.sr-arrow').forEach((b) => FX.on(b, 'click', (e) => { e.preventDefault(); e.stopPropagation(); vel = 0; const base = target !== null ? target : Math.round(ang / STEP) * STEP; target = base + (+b.dataset.d) * STEP; pauseUntil = performance.now() + 4000; }));
     const show = (i) => { const p = P[i]; info.innerHTML = `<small>${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')} · ${esc(p.brand || p.cats[0] || '')}</small><h2>${esc(p.name)}</h2><b class="sr-price">${pft(p)}</b><div class="hero-cta"><a class="btn btn-gold" href="#/termek/${p.slug}">Részletek</a>${LX2.addBtn(p).replace('btn btn-gold', 'btn btn-ghost')}</div>`; };
     FX.tick(() => {
+      if (!vis) return;
       if (target !== null) { ang += (target - ang) * 0.12; if (Math.abs(target - ang) < 0.04) { ang = target; target = null; } }
       else if (!drag) { if (performance.now() < pauseUntil) vel = 0; else { vel += ((Math.abs(vel) < 0.04 ? 0.04 : vel) - vel) * 0.02; ang += vel; vel *= 0.985; } }
       ring.style.transform = `translateZ(${-R()}px) rotateY(${-ang}deg)`;
-      items.forEach((it) => it.style.setProperty('--r', R() + 'px'));
-      items.forEach((it, i) => { const d = ((i * 360 / N - ang) % 360 + 540) % 360 - 180; it.style.setProperty('--lit', Math.pow(Math.max(0, Math.cos(d * Math.PI / 180)), 2).toFixed(2)); });   // a csempe fényessége a reflektor felé fordulással nő
+      lts.forEach((it, i) => { const d = ((i * 360 / N - ang) % 360 + 540) % 360 - 180, l = Math.round(Math.pow(Math.max(0, Math.cos(d * Math.PI / 180)), 2) * 10) / 10; if (l !== litPrev[i]) { litPrev[i] = l; it.style.setProperty('--lit', l); } });   // a fény erősödik, ahogy a csempe a reflektor felé fordul – csak változáskor ír
       const f = ((Math.round(ang / (360 / N)) % N) + N) % N;
       if (f !== front) { front = f; items.forEach((it, i) => it.classList.toggle('on', i === f)); show(f); }
     });
@@ -83,7 +88,7 @@ LAYOUTS.showroom = function () {
   return `<div class="lx2 srm">
     <section class="sr-stage"><div class="sr-spot s1"></div><div class="sr-spot s2"></div><div class="sr-spot s3"></div><div class="sr-floor"></div>
       <div class="sr-head wrap"><span class="sec-num">◢ SHOWROOM · ${esc(C.name)}</span><h1 data-split="c">${fill(C.hero.title)}</h1></div>
-      <div class="sr-scene"><div class="sr-ring">${P.map((p) => `<a class="sr-it" href="#/termek/${p.slug}" draggable="false"><img src="${pimg(p)}" alt="" draggable="false"></a>`).join('')}</div></div>
+      <div class="sr-scene"><div class="sr-ring">${P.map((p) => `<a class="sr-it" href="#/termek/${p.slug}" draggable="false"><img src="${pimg(p)}" alt="" draggable="false" decoding="async"></a>`).join('')}${P.map(() => '<i class="sr-lt" aria-hidden="true"></i>').join('')}</div></div>
       <button class="sr-arrow l" data-d="-1" aria-label="Előző">‹</button><button class="sr-arrow r" data-d="1" aria-label="Következő">›</button>
       <div class="sr-info"></div><small class="sr-hint muted">húzd oldalra – forgasd a pódiumot</small></section>
     <section class="sec wrap"><div class="sr-lines">${SKINS.slice(0, 8).map((s) => `<a href="#/${NR}/${s.k}" style="background-image:url(${s.img})"><span><b>${esc(s.name)}</b><small>${LX.needN(s)} modell</small></span></a>`).join('')}</div></section>
