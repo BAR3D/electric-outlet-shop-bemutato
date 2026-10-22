@@ -10,6 +10,7 @@
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const easeOut = (x) => 1 - Math.pow(1 - x, 3), easeIn = (x) => x * x * x, easeIO = (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
   const rnd = (a, b) => a + Math.random() * (b - a);
+  const SEEK = parseFloat(new URLSearchParams(location.search).get('introAt')) || 0, FREEZE = /[?&]introFreeze=1/.test(location.search);   // bemutatáshoz: ?introAt=<mp>[&introFreeze=1]
   const loadImg = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
 
   const SVG = `<svg class="eo-svg" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true"><defs>
@@ -94,10 +95,10 @@
     function sample() {
       const lw = W * .6, lh = lw * (logo.naturalHeight / logo.naturalWidth); logoBox = { x: (W - lw) / 2, y: (H - lh) / 2, w: lw, h: lh };
       const off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d', { willReadFrequently: true }); o.drawImage(logo, logoBox.x, logoBox.y, logoBox.w, logoBox.h);
-      const d = o.getImageData(0, 0, W, H).data, step = Math.max(2, Math.round(W / 300)), pts = [];
-      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { const i = (y * W + x) * 4; if (d[i + 3] < 140) continue; pts.push({ x: x + step / 2, y: y + step / 2, c: [d[i], d[i + 1], d[i + 2]] }); }
-      P = pts.map((p) => { const a = Math.random() * Math.PI * 2, far = rnd(.15, .8) * Math.max(W, H);
-        return { tx: p.x, ty: p.y, c: p.c, s: step * .92, sx: clamp(W / 2 + Math.cos(a) * far, -20, W + 20), sy: clamp(H / 2 + Math.sin(a) * far * .6, -20, H + 20), da: (p.x / W) * .55 + Math.random() * .3, ph: Math.random() * 6.28 }; });
+      const d = o.getImageData(0, 0, W, H).data, step = Math.max(1.6, W / 540), pts = [];
+      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { const i = ((y | 0) * W + (x | 0)) * 4; if (!(d[i + 3] >= 140)) continue; pts.push({ x: x + step / 2, y: y + step / 2, c: [d[i], d[i + 1], d[i + 2]], cs: `rgb(${d[i]},${d[i + 1]},${d[i + 2]})` }); }
+      P = pts.map((p) => { const a = Math.random() * Math.PI * 2, far = rnd(.08, .5) * Math.max(W, H);
+        return { tx: p.x, ty: p.y, c: p.c, cs: p.cs, s: Math.max(1, step * .7), sx: clamp(W / 2 + Math.cos(a) * far, -20, W + 20), sy: clamp(H / 2 + Math.sin(a) * far * .34, -20, H + 20), da: (p.x / W) * .55 + Math.random() * .3, ph: Math.random() * 6.28 }; });
     }
     streaks = Array.from({ length: 280 }, () => ({ a: Math.random() * Math.PI * 2, r0: rnd(.015, .3), z: rnd(.25, 1), y: Math.random() < .55 }));
     motes = Array.from({ length: 110 }, () => ({ x: Math.random(), y: Math.random() * .85, r: rnd(.5, 2.2), a: rnd(.08, .45), sp: rnd(.004, .018), ph: Math.random() * 6.28 }));
@@ -109,10 +110,11 @@
     const onKey = (e) => { if (e.key === 'Escape' || e.key === 'Enter') finish(); };
     addEventListener('keydown', onKey); addEventListener('resize', size); root.querySelector('.eo-skip').addEventListener('click', finish);
     size();
+    if (FREEZE) window.__eoDbg = () => ({ n: P.length, W, H, logoBox, logo: [logo.naturalWidth, logo.naturalHeight], sw, sh });
 
     function frame(now) {
       if (done) return;
-      if (!t0) t0 = now; const t = (now - t0) / 1000;
+      if (!t0) t0 = now; const t = FREEZE ? SEEK : (now - t0) / 1000 + SEEK;   // SEEK: ?introAt=<mp> – a bemutatáshoz adott másodpercre ugrik
       // kamera: lassú, ráközelítő mozgás, majd a hiperugrás (gyorsuló zoom a képernyő közepébe)
       let cam = 1 + .08 * easeOut(clamp(t / T.j0)), pj = clamp((t - T.j0) / (T.j1 - T.j0));
       if (pj > 0) cam = 1.08 * Math.exp(Math.log(camMax / 1.08) * Math.pow(pj, 2.3));
@@ -130,8 +132,9 @@
         const asm = clamp((t - T.asm0) / (T.asm1 - T.asm0)), hold = clamp((t - T.asm1) / 1.0); let lit = 0;
         const bgG = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * .6); bgG.addColorStop(0, 'rgba(255,194,26,.10)'); bgG.addColorStop(1, 'rgba(255,194,26,0)'); ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
         for (const p of P) { const q = easeOut(clamp((asm - p.da * .55) / .45)), w = (1 - q) * 6 * RES; lit += q;
-          const x = p.sx + (p.tx - p.sx) * q + Math.sin(now / 160 + p.ph) * w, y = p.sy + (p.ty - p.sy) * q + Math.cos(now / 190 + p.ph) * w, a = clamp(q * 1.6 + .15) * (.75 + .25 * Math.sin(now / 90 + p.ph)), wh = (1 - q) * .7;
-          ctx.fillStyle = `rgba(${Math.round(p.c[0] + (255 - p.c[0]) * wh)},${Math.round(p.c[1] + (255 - p.c[1]) * wh)},${Math.round(p.c[2] + (255 - p.c[2]) * wh)},${clamp(a)})`; ctx.fillRect(x - p.s / 2, y - p.s / 2, p.s, p.s); }
+          const x = p.sx + (p.tx - p.sx) * q + Math.sin(now / 160 + p.ph) * w, y = p.sy + (p.ty - p.sy) * q + Math.cos(now / 190 + p.ph) * w, a = (.02 + .98 * Math.pow(q, 1.7)) * (.82 + .18 * Math.sin(now / 90 + p.ph)), wh = (1 - q) * .5;
+          ctx.globalAlpha = clamp(a); ctx.fillStyle = wh > .3 ? '#fff' : p.cs; ctx.fillRect(x - p.s / 2, y - p.s / 2, p.s, p.s); }
+        ctx.globalAlpha = 1;
         if (hold > 0) { ctx.globalAlpha = easeIO(hold); ctx.drawImage(logo, logoBox.x, logoBox.y, logoBox.w, logoBox.h);
           const gx = W * (((t - T.asm1) / (T.j0 - T.asm1)) * 1.6 - .3); ctx.save(); ctx.beginPath(); ctx.rect(logoBox.x, logoBox.y, logoBox.w, logoBox.h); ctx.clip(); ctx.globalCompositeOperation = 'lighter';
           const sg = ctx.createLinearGradient(gx - 70 * RES, 0, gx + 70 * RES, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.22)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
@@ -157,6 +160,7 @@
         wctx.fillStyle = g; wctx.fillRect(0, 0, vw, vh); wctx.globalCompositeOperation = 'source-over';
       }
       flash.style.opacity = String(t > T.j1 - .25 ? easeIn(clamp((t - (T.j1 - .25)) / (T.flash - (T.j1 - .25)))) : 0);
+      if (FREEZE) return;   // álló kép az adott időpontban
       if (t >= T.flash) { finish(); return; }
       raf = requestAnimationFrame(frame);
     }
