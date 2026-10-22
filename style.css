@@ -445,3 +445,8 @@ main { min-height: 100vh; }
 .brand-mark.brand-svg { width: 34px; height: 34px; border-radius: 9px; background-color: transparent; background-size: contain; background-repeat: no-repeat; background-position: center; box-shadow: none; }
 body.has-logo .brand { font-family: var(--sans); font-weight: 800; font-size: 17px; letter-spacing: .09em; text-transform: uppercase; }
 @media (max-width: 640px) { body.has-logo .brand { font-size: 12px; letter-spacing: .06em; line-height: 1.15; gap: 8px; max-width: 150px; } .brand-mark.brand-svg { width: 30px; height: 30px; flex: none; } }
+
+/* főoldali TV-s logóanimáció (config.heroTv): a nappali 16:9, telefonon (álló) a TV körüli részt mutatja nagyobban */
+.hero-tv { position: relative; width: 100%; height: min(56.25vw, 100vh); background: #000; }
+.hero-tv iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+@media (max-aspect-ratio: 4/5) { .hero-tv { height: 82vw; } }

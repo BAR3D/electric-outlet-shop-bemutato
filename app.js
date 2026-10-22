@@ -696,6 +696,10 @@ function route() {
   disposeRings(); disposeViewers();
   if (window.LX_CLEANUP) LX_CLEANUP();
   app.innerHTML = view();
+  if (r === '' && C.heroTv) {   // a főoldal tetején: a márka animált logója egy TV-ben (config.heroTv = az animáció oldala); ha nem látszik, szünetel
+    app.insertAdjacentHTML('afterbegin', `<section class="hero-tv" aria-label="${esc(C.name)}"><iframe src="${esc(C.heroTv)}" title="${esc(C.name)} – animált logó" scrolling="no"></iframe></section>`);
+    const fr = $('.hero-tv iframe'); if (fr && 'IntersectionObserver' in window) new IntersectionObserver((es) => { try { fr.contentWindow.postMessage(es[es.length - 1].isIntersecting ? 'play' : 'pause', '*'); } catch { /* nincs */ } }).observe(fr);
+  }
   drawer(false);
   $('#navLinks').classList.remove('open');
   $$('#navLinks a:not(.nav-kulso)').forEach(a => a.classList.toggle('on', a.getAttribute('href').slice(2).split('/')[0] === (r === 'termek' ? (KAT === 'ws' ? 'webshop' : 'termekek') : r === 'marka' ? 'markak' : r)));

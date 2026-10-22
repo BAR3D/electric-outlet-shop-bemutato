@@ -24,7 +24,8 @@
   .screen::after { content: ""; position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(115deg, rgba(255, 255, 255, .10) 0%, rgba(255, 255, 255, .03) 28%, transparent 42%), repeating-linear-gradient(0deg, rgba(0, 0, 0, .13) 0 1px, transparent 1px 3px); }
   .cim { position: absolute; left: 0; right: 0; bottom: 2.2%; text-align: center; color: rgba(255, 255, 255, .55); font-size: clamp(10px, 1.1vw, 14px); letter-spacing: .28em; text-transform: uppercase; }
-  noscript img { width: 100%; }
+  .embed .cim { display: none; }
+  @media (max-aspect-ratio: 4/5) { body { display: block; } .stage { position: absolute; width: 235vw; left: 50%; top: 50%; transform: translate(-50%, -45.5%); } }
 </style>
 </head>
 <body>
@@ -39,8 +40,10 @@
   'use strict';
   const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), glow = document.getElementById('glow'), stage = document.getElementById('stage');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const logo = new Image(); logo.src = 'logo-sotet-hatterre.svg';
-  let W = 0, H = 0, dpr = 1, P = [], logoBox = null, t0 = 0;
+  const Q = new URLSearchParams(location.search), TVLOGO = Q.get('logo') === 'tv', EMBED = Q.has('embed');
+  if (EMBED) document.documentElement.classList.add('embed');
+  const logo = new Image(); logo.src = TVLOGO ? 'logo-tv.svg' : 'logo-sotet-hatterre.svg';
+  let W = 0, H = 0, dpr = 1, P = [], logoBox = null, t0 = 0, paused = false, off0 = 0;
   const CYCLE = 12.0, T_ON = 0.9, T_ASM = 4.6, T_HOLD = 9.0, T_END = 10.6;   // másodpercek: bekapcsolás · összeállás · kész logó · szétesés · szünet
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const easeOut = (x) => 1 - Math.pow(1 - x, 3), easeIn = (x) => x * x * x, easeIO = (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
@@ -56,7 +59,7 @@
   // a logó képpontjainak mintavétele: minden minta egy részecske, ami a helyére repül
   function sample() {
     if (!logo.complete || !W) return;
-    const lw = W * 0.86, lh = lw * (logo.naturalHeight / logo.naturalWidth);
+    const lw = W * (TVLOGO ? 0.78 : 0.86), lh = lw * (logo.naturalHeight / logo.naturalWidth);
     logoBox = { x: (W - lw) / 2, y: (H - lh) / 2, w: lw, h: lh };
     const off = document.createElement('canvas'); off.width = Math.round(W); off.height = Math.round(H);
     const o = off.getContext('2d', { willReadFrequently: true });
@@ -77,7 +80,9 @@
   }
 
   function frame(now) {
+    if (paused) { off0 = now; return; }
     if (!t0) t0 = now;
+    if (off0) { t0 += now - off0; off0 = 0; }
     const t = reduce ? T_HOLD - 1 : ((now - t0) / 1000) % CYCLE;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = '#020203'; ctx.fillRect(0, 0, W, H);
@@ -122,6 +127,7 @@
     requestAnimationFrame(frame);
   }
 
+  addEventListener('message', (e) => { if (e.data === 'pause') paused = true; else if (e.data === 'play' && paused) { paused = false; requestAnimationFrame(frame); } });
   let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(size, 150); });
   const go = () => { size(); requestAnimationFrame(frame); };
   logo.complete ? go() : logo.addEventListener('load', go);
