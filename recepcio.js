@@ -182,7 +182,7 @@ LAYOUTS.recepcio = function () {
 // minden aloldalon (nem csak a főoldalon): logó-betű a menüben; a „termek” és a „csoportok” fül kikerül a menüből,
 // mert a recepción a termek pontosan ezt adják (az oldalak a termekből és a linkekről továbbra is elérhetők)
 (function rcGlobal() {
-  const go = () => { if (typeof C === 'undefined' || !/^recepcio/.test((typeof LY === 'function' && LY()) || C.layout || '')) return;
+  const go = () => { if (typeof C === 'undefined' || !C || !/^recepcio/.test((typeof LY === 'function' && LY()) || C.layout || '')) return;
     if (C.logo) $$('.brand-mark').forEach((m) => { m.textContent = C.logo.betu || ''; m.classList.add('rc-lg'); });
     const tema = rcTema(), TM = RC_TEMAK[tema], lux = !!TM; if (TM && !document.body.classList.contains('rc-t-' + tema)) document.body.classList.add('rc-t-' + tema);
     if (lux && !document.body.__rcLux) { document.body.__rcLux = 1; const fix = () => { const cl = document.body.classList; if (TM.dark && cl.contains('light')) cl.remove('light'); if (!cl.contains('rc-lux')) cl.add('rc-lux'); };   // csak valódi változáskor ír (különben a figyelő önmagát hívná végtelenül)

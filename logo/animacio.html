@@ -40,9 +40,9 @@
   'use strict';
   const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), glow = document.getElementById('glow'), stage = document.getElementById('stage');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const Q = new URLSearchParams(location.search), TVLOGO = Q.get('logo') === 'tv', EMBED = Q.has('embed');
+  const Q = new URLSearchParams(location.search), TVLOGO = true, EMBED = Q.has('embed');
   if (EMBED) document.documentElement.classList.add('embed');
-  const logo = new Image(); logo.src = TVLOGO ? 'logo-tv.svg' : 'logo-sotet-hatterre.svg';
+  const logo = new Image(); logo.src = 'logo-tv.svg';
   let W = 0, H = 0, dpr = 1, P = [], logoBox = null, t0 = 0, paused = false, off0 = 0;
   const CYCLE = 12.0, T_ON = 0.9, T_ASM = 4.6, T_HOLD = 9.0, T_END = 10.6;   // másodpercek: bekapcsolás · összeállás · kész logó · szétesés · szünet
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));

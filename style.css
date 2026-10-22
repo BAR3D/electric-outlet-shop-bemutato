@@ -446,7 +446,9 @@ main { min-height: 100vh; }
 body.has-logo .brand { font-family: var(--sans); font-weight: 800; font-size: 17px; letter-spacing: .09em; text-transform: uppercase; }
 @media (max-width: 640px) { body.has-logo .brand { font-size: 12px; letter-spacing: .06em; line-height: 1.15; gap: 8px; max-width: 150px; } .brand-mark.brand-svg { width: 30px; height: 30px; flex: none; } }
 
-/* főoldali TV-s logóanimáció (config.heroTv): a nappali 16:9, telefonon (álló) a TV körüli részt mutatja nagyobban */
-.hero-tv { position: relative; width: 100%; height: min(56.25vw, 100vh); background: #000; }
-.hero-tv iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
-@media (max-aspect-ratio: 4/5) { .hero-tv { height: 82vw; } }
+/* animált TV-logó (config.logoAnim): fejléc, főoldal teteje, lábléc */
+.brand-tv { display: block; height: 44px; width: auto; aspect-ratio: 640 / 290; }
+.brand-tv-img { display: block; height: 52px; width: auto; }
+.hero-tv { display: grid; place-items: center; min-height: clamp(300px, 52vh, 520px); padding: 110px 16px 6px; background: radial-gradient(ellipse 55% 60% at 50% 62%, rgba(var(--accent-rgb), .12), transparent 70%); }
+.hero-tv-cv { display: block; width: min(660px, 88vw); aspect-ratio: 640 / 290; filter: drop-shadow(0 22px 54px rgba(var(--accent-rgb), .2)); }
+@media (max-width: 640px) { .brand-tv { height: 38px; } .hero-tv { min-height: 250px; padding-top: 96px; } }

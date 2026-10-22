@@ -696,9 +696,9 @@ function route() {
   disposeRings(); disposeViewers();
   if (window.LX_CLEANUP) LX_CLEANUP();
   app.innerHTML = view();
-  if (r === '' && C.heroTv) {   // a főoldal tetején: a márka animált logója egy TV-ben (config.heroTv = az animáció oldala); ha nem látszik, szünetel
-    app.insertAdjacentHTML('afterbegin', `<section class="hero-tv" aria-label="${esc(C.name)}"><iframe src="${esc(C.heroTv)}" title="${esc(C.name)} – animált logó" scrolling="no"></iframe></section>`);
-    const fr = $('.hero-tv iframe'); if (fr && 'IntersectionObserver' in window) new IntersectionObserver((es) => { try { fr.contentWindow.postMessage(es[es.length - 1].isIntersecting ? 'play' : 'pause', '*'); } catch { /* nincs */ } }).observe(fr);
+  if (r === '' && C.logoAnim) {   // a főoldal tetején a márka animált TV-logója (a felirat a képernyőn áll össze, loopban)
+    app.insertAdjacentHTML('afterbegin', '<section class="hero-tv"><canvas class="hero-tv-cv" role="img" aria-label="' + esc(C.name) + '"></canvas></section>');
+    logoAnimMount($('.hero-tv-cv'));
   }
   drawer(false);
   $('#navLinks').classList.remove('open');
@@ -818,6 +818,15 @@ async function eloTartalom() {
   if (t.telefon) C.contact = { ...(C.contact || {}), phone: t.telefon };
 }
 
+/* ---------- animált TV-logó (config.logoAnim = { js, frame, full }) ---------- */
+const logoAnimQ = [];
+function logoAnimMount(cv) {
+  if (!cv || !C.logoAnim) return;
+  if (window.EOLogoTV) return EOLogoTV.mount(cv, C.logoAnim);
+  logoAnimQ.push(cv);
+  if (!document.getElementById('logoAnimJs')) { const sc = document.createElement('script'); sc.id = 'logoAnimJs'; sc.src = C.logoAnim.js; sc.onload = () => logoAnimQ.splice(0).forEach((c) => EOLogoTV.mount(c, C.logoAnim)); document.head.appendChild(sc); }
+}
+
 /* ---------- indítás ---------- */
 (async () => {
   C = await (await fetch('data/config.json', { cache: 'no-store' })).json();
@@ -828,6 +837,11 @@ async function eloTartalom() {
   SKINS.forEach(x => { x.img = img(x.img); });
   cart.load(); renderCart();
   document.body.classList.add('layout-' + LY());
+  if (C.logoAnim) {
+    const brands = $$('.brand'); if (brands[0]) brands[0].innerHTML = '<canvas class="brand-tv" role="img" aria-label="' + esc(C.name) + '"></canvas>';
+    if (brands[1]) brands[1].innerHTML = '<img class="brand-tv-img" src="' + esc(C.logoAnim.full) + '" alt="' + esc(C.name) + '">';
+    logoAnimMount($('.brand-tv'));
+  }
   if (C.logoMark) { document.body.classList.add('has-logo'); $$('.brand-mark').forEach((m) => { m.classList.add('brand-svg'); m.style.backgroundImage = `url(${C.logoMark})`; }); }
   if (C.vilagos || ((window.LAYOUT_META || {})[LY()] || {}).light) document.body.classList.add('light');
   // külső menüpontok (pl. a webshopban „Szalon” → a szalon oldala, másik domain)
