@@ -696,10 +696,6 @@ function route() {
   disposeRings(); disposeViewers();
   if (window.LX_CLEANUP) LX_CLEANUP();
   app.innerHTML = view();
-  if (r === '' && C.logoAnim) {   // a főoldal tetején a márka animált TV-logója (a felirat a képernyőn áll össze, loopban)
-    app.insertAdjacentHTML('afterbegin', '<section class="hero-tv"><canvas class="hero-tv-cv" role="img" aria-label="' + esc(C.name) + '"></canvas></section>');
-    logoAnimMount($('.hero-tv-cv'));
-  }
   drawer(false);
   $('#navLinks').classList.remove('open');
   $$('#navLinks a:not(.nav-kulso)').forEach(a => a.classList.toggle('on', a.getAttribute('href').slice(2).split('/')[0] === (r === 'termek' ? (KAT === 'ws' ? 'webshop' : 'termekek') : r === 'marka' ? 'markak' : r)));
@@ -827,9 +823,24 @@ function logoAnimMount(cv) {
   if (!document.getElementById('logoAnimJs')) { const sc = document.createElement('script'); sc.id = 'logoAnimJs'; sc.src = C.logoAnim.js; sc.onload = () => logoAnimQ.splice(0).forEach((c) => EOLogoTV.mount(c, C.logoAnim)); document.head.appendChild(sc); }
 }
 
+/* ---------- nyitóanimáció (config.intro = { js, full }) ---------- */
+function introStart() {
+  const I = C.intro; if (!I) return;
+  let seen = false; try { seen = !!sessionStorage.getItem('eoIntro'); } catch { /* nincs tár */ }
+  const home = !location.hash || location.hash === '#/' || location.hash === '#', force = /[?&]intro=1/.test(location.search);
+  if (!home || (seen && !force)) return;
+  try { sessionStorage.setItem('eoIntro', '1'); } catch { /* nincs tár */ }
+  const cover = document.createElement('div'); cover.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99998'; document.body.appendChild(cover);   // addig takar, amíg a nyitóréteg fel nem épül
+  const rm = () => cover.remove(); setTimeout(rm, 4000);
+  const sc = document.createElement('script'); sc.src = I.js; sc.onerror = rm;
+  sc.onload = () => { EOIntro.run({ full: I.full, onDone: rm }); const w = () => (document.querySelector('.eo-intro') ? rm() : requestAnimationFrame(w)); w(); };
+  document.head.appendChild(sc);
+}
+
 /* ---------- indítás ---------- */
 (async () => {
   C = await (await fetch('data/config.json', { cache: 'no-store' })).json();
+  introStart();
   SKINS = C.needs || []; TYPES = C.types || []; BRANDS = C.lines || []; NR = C.labels.needsRoute || 'igeny'; SCENES = C.scenes || [];
   await background(); sparkle();
   S = await (await fetch('data/site.json?v=' + C.version)).json();
