@@ -52,26 +52,24 @@
       if (!visible || paused) { off0 = now; return; }
       if (!t0) t0 = now; if (off0) { t0 += now - off0; off0 = 0; }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-      if (!loop && (finished || reduce || (now - t0) / 1000 >= A + .9)) { finished = true; ctx.drawImage(full, 0, 0, W, H); return; }   // kész: a teljes logó, több képkocka nem kell
+      if (!loop && (finished || reduce || (now - t0) / 1000 >= A + .6)) { finished = true; ctx.drawImage(full, 0, 0, W, H); return; }   // kész: a teljes logó, több képkocka nem kell
       const t = reduce ? T_HOLD - 0.5 : ((now - t0) / 1000) % CYCLE;
       ctx.drawImage(frame, 0, 0, W, H);                          // a TV (keret, képernyő, állvány) – felirat nélkül
       ctx.save(); screenPath(ctx); ctx.clip();
       if (t < T_FLASH) { ctx.fillStyle = `rgba(255,255,255,${.5 * (1 - t / T_FLASH)})`; ctx.fillRect(scr.x, scr.y, scr.w, scr.h); }   // bekapcsolás villanása
       else if (t < T_END) {
-        const asm = clamp((t - T_FLASH) / (A - T_FLASH)), hold = clamp((t - A) / .9), out = clamp((t - T_HOLD) / (T_END - T_HOLD));
+        const asm = clamp((t - T_FLASH) / (A - T_FLASH)), hold = clamp((t - A) / .5), out = clamp((t - T_HOLD) / (T_END - T_HOLD));
         for (const p of P) {
           let x, y, a, sz = p.s, white;
           if (out > 0) { const q = easeIn(clamp((out - p.de * .5) / (1 - p.de * .5))); x = p.tx + (p.ex - p.tx) * q; y = p.ty + (p.ey - p.ty) * q; a = 1 - q; white = 0; }
           else { const q = easeOut(clamp((asm - p.da * .55) / .45)), w = (1 - q) * 4 * k * 2;
             x = p.sx + (p.tx - p.sx) * q + Math.sin(now / 160 + p.ph) * w; y = p.sy + (p.ty - p.sy) * q + Math.cos(now / 190 + p.ph) * w; a = (.02 + .98 * Math.pow(q, 1.7)) * (.82 + .18 * Math.sin(now / 90 + p.ph)); white = (1 - q) * .5; }
           const r = Math.round(p.c[0] + (255 - p.c[0]) * white), g = Math.round(p.c[1] + (255 - p.c[1]) * white), b = Math.round(p.c[2] + (255 - p.c[2]) * white);
-          ctx.fillStyle = `rgba(${r},${g},${b},${clamp(a)})`; ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
+          ctx.fillStyle = `rgba(${r},${g},${b},${clamp(a) * (out > 0 ? 1 : 1 - easeIO(hold))})`; ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
         }
         if (hold > 0 && out < 1) {   // kész felirat: éles vektoros kép úszik át, rajta fénycsík fut végig
           ctx.globalAlpha = easeIO(hold) * (1 - out); ctx.drawImage(full, 0, 0, W, H);
-          const sx = scr.x + ((t - A) / (loop ? T_HOLD - T_ASM : 1.1) * 1.5 - .25) * scr.w;
-          ctx.globalCompositeOperation = 'lighter'; const g = ctx.createLinearGradient(sx - 50 * k, 0, sx + 50 * k, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.16)'); g.addColorStop(1, 'rgba(255,255,255,0)');
-          ctx.fillStyle = g; ctx.fillRect(sx - 50 * k, scr.y, 100 * k, scr.h); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+          ctx.globalAlpha = 1;
         }
       }
       ctx.restore();

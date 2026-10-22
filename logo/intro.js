@@ -74,7 +74,7 @@
     document.body.appendChild(root);
     const prevOverflow = document.documentElement.style.overflow; document.documentElement.style.overflow = 'hidden';
     const stage = root.querySelector('.eo-stage'), scrEl = root.querySelector('.eo-screen'), cv = scrEl.querySelector('canvas'), ctx = cv.getContext('2d'), dust = root.querySelector('.eo-dust'), dctx = dust.getContext('2d'),
-      wp = root.querySelector('.eo-warp'), wctx = wp.getContext('2d'), black = root.querySelector('.eo-black'), flash = root.querySelector('.eo-flash'), led = root.querySelector('#eoLed');
+      sw2 = document.createElement('canvas'), sctx = sw2.getContext('2d'), wp = root.querySelector('.eo-warp'), wctx = wp.getContext('2d'), black = root.querySelector('.eo-black'), flash = root.querySelector('.eo-flash'), led = root.querySelector('#eoLed');
     scrEl.style.cssText = `left:${SCR.l * 100}%;top:${SCR.t * 100}%;width:${SCR.w * 100}%;height:${SCR.h * 100}%`;
     let vw = 0, vh = 0, sw = 0, sh = 0, sdw = 0, sdh = 0, W = 0, H = 0, RES = 1.6, P = [], logoBox = null, camMax = 2.4, cx = 0, cy = 0, done = false, t0 = 0, raf = 0, streaks = [], motes = [];
 
@@ -87,7 +87,7 @@
       sw = stW * SCR.w; sh = stH * SCR.h; sdw = stW; sdh = stH;
       camMax = Math.max(vw / sw, vh / sh) * 1.22;
       cx = vw / 2 + (stW * ox / 100 - stW / 2); cy = vh / 2 + (stH * oy / 100 - stH / 2);
-      RES = Math.min(1.8, 2600 / Math.max(sw, 1)); W = Math.round(sw * RES); H = Math.round(sh * RES); cv.width = W; cv.height = H;
+      RES = Math.min(1.8, 2600 / Math.max(sw, 1)); W = Math.round(sw * RES); H = Math.round(sh * RES); cv.width = W; cv.height = H; sw2.width = W; sw2.height = H;
       dust.width = Math.round(stW); dust.height = Math.round(stH);
       const dpr = Math.min(2, devicePixelRatio || 1); wp.width = Math.round(vw * dpr); wp.height = Math.round(vh * dpr); wctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       sample();
@@ -96,7 +96,7 @@
       const lw = W * .6, lh = lw * (logo.naturalHeight / logo.naturalWidth); logoBox = { x: (W - lw) / 2, y: (H - lh) / 2, w: lw, h: lh };
       const off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d', { willReadFrequently: true }); o.drawImage(logo, logoBox.x, logoBox.y, logoBox.w, logoBox.h);
       const d = o.getImageData(0, 0, W, H).data, step = Math.max(1.6, W / 540), pts = [];
-      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { const i = ((y | 0) * W + (x | 0)) * 4; if (!(d[i + 3] >= 140)) continue; pts.push({ x: x + step / 2, y: y + step / 2, c: [d[i], d[i + 1], d[i + 2]], cs: `rgb(${d[i]},${d[i + 1]},${d[i + 2]})` }); }
+      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { const i = ((y | 0) * W + (x | 0)) * 4; if (!(d[i + 3] >= 215)) continue; pts.push({ x: x + step / 2, y: y + step / 2, c: [d[i], d[i + 1], d[i + 2]], cs: `rgb(${d[i]},${d[i + 1]},${d[i + 2]})` }); }
       P = pts.map((p) => { const a = Math.random() * Math.PI * 2, far = rnd(.08, .5) * Math.max(W, H);
         return { tx: p.x, ty: p.y, c: p.c, cs: p.cs, s: Math.max(1, step * .7), sx: clamp(W / 2 + Math.cos(a) * far, -20, W + 20), sy: clamp(H / 2 + Math.sin(a) * far * .34, -20, H + 20), da: (p.x / W) * .55 + Math.random() * .3, ph: Math.random() * 6.28 }; });
     }
@@ -129,16 +129,17 @@
         const g = ctx.createLinearGradient(W / 2 - w / 2, 0, W / 2 + w / 2, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = g; ctx.fillRect(W / 2 - w / 2, H / 2 - h / 2, w, h); lum = .12 * k; }
       else if (t >= T.asm0) {
-        const asm = clamp((t - T.asm0) / (T.asm1 - T.asm0)), hold = clamp((t - T.asm1) / 1.0); let lit = 0;
+        const asm = clamp((t - T.asm0) / (T.asm1 - T.asm0)), hold = clamp((t - T.asm1) / .55); let lit = 0;
         const bgG = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * .6); bgG.addColorStop(0, 'rgba(255,194,26,.10)'); bgG.addColorStop(1, 'rgba(255,194,26,0)'); ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
         for (const p of P) { const q = easeOut(clamp((asm - p.da * .55) / .45)), w = (1 - q) * 6 * RES; lit += q;
           const x = p.sx + (p.tx - p.sx) * q + Math.sin(now / 160 + p.ph) * w, y = p.sy + (p.ty - p.sy) * q + Math.cos(now / 190 + p.ph) * w, a = (.02 + .98 * Math.pow(q, 1.7)) * (.82 + .18 * Math.sin(now / 90 + p.ph)), wh = (1 - q) * .5;
-          ctx.globalAlpha = clamp(a); ctx.fillStyle = wh > .3 ? '#fff' : p.cs; ctx.fillRect(x - p.s / 2, y - p.s / 2, p.s, p.s); }
+          ctx.globalAlpha = clamp(a) * (1 - easeIO(hold)); ctx.fillStyle = wh > .3 ? '#fff' : p.cs; ctx.fillRect(x - p.s / 2, y - p.s / 2, p.s, p.s); }
         ctx.globalAlpha = 1;
         if (hold > 0) { ctx.globalAlpha = easeIO(hold); ctx.drawImage(logo, logoBox.x, logoBox.y, logoBox.w, logoBox.h);
-          const gx = W * (((t - T.asm1) / (T.j0 - T.asm1)) * 1.6 - .3); ctx.save(); ctx.beginPath(); ctx.rect(logoBox.x, logoBox.y, logoBox.w, logoBox.h); ctx.clip(); ctx.globalCompositeOperation = 'lighter';
-          const sg = ctx.createLinearGradient(gx - 70 * RES, 0, gx + 70 * RES, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.22)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
-          ctx.fillStyle = sg; ctx.fillRect(gx - 70 * RES, 0, 140 * RES, H); ctx.restore(); ctx.globalAlpha = 1; }
+          const gx = W * (((t - T.asm1) / (T.j0 - T.asm1)) * 1.6 - .3);
+          sctx.globalCompositeOperation = 'source-over'; sctx.clearRect(0, 0, W, H); const sg = sctx.createLinearGradient(gx - 70 * RES, 0, gx + 70 * RES, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.5)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
+          sctx.fillStyle = sg; sctx.fillRect(gx - 70 * RES, 0, 140 * RES, H); sctx.globalCompositeOperation = 'destination-in'; sctx.drawImage(logo, logoBox.x, logoBox.y, logoBox.w, logoBox.h);   // a csík csak a betűk alakján marad meg
+          ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(sw2, 0, 0); ctx.restore(); ctx.globalAlpha = 1; }
         lum = hold > 0 ? .92 + .08 * Math.sin(now / 600) : .22 + .78 * clamp(lit / Math.max(1, P.length) * 1.2);
       }
       const L = (lum * 1.1).toFixed(3); stage.style.setProperty('--l', L);
