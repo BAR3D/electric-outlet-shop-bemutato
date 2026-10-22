@@ -60,15 +60,19 @@ LAYOUTS.showroom = function () {
     const ring = $('.sr-ring'), stage = $('.sr-stage'), info = $('.sr-info'), items = $$('.sr-it'); if (!ring || !N) return;
     const R = () => Math.max(300, Math.min(innerWidth * 0.42, 620)) * (N > 8 ? 1.15 : 1);
     items.forEach((it, i) => it.style.setProperty('--a', (i * 360 / N) + 'deg'));
-    let ang = 0, vel = 0.04, drag = false, lx = 0, moved = 0, front = -1;
-    FX.on(stage, 'pointerdown', (e) => { drag = true; lx = e.clientX; moved = 0; vel = 0; stage.setPointerCapture(e.pointerId); });
+    let ang = 0, vel = 0.04, drag = false, lx = 0, moved = 0, front = -1, target = null, pauseUntil = 0;
+    const STEP = 360 / N;
+    // a nyilak és az infósáv a színpadon belül vannak: ezeken nem indul húzás (különben az egér „elfogása” elnyelné a kattintást)
+    FX.on(stage, 'pointerdown', (e) => { if (e.target.closest('.sr-arrow, .sr-info')) return; drag = true; lx = e.clientX; moved = 0; vel = 0; target = null; stage.setPointerCapture(e.pointerId); });
     FX.on(stage, 'pointermove', (e) => { if (!drag) return; const d = e.clientX - lx; lx = e.clientX; moved += Math.abs(d); ang += d * 0.18; vel = d * 0.18; });
     FX.on(stage, 'pointerup', () => { drag = false; });
     FX.on(stage, 'click', (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
-    $$('.sr-arrow').forEach((b) => FX.on(b, 'click', () => { vel = 0; ang += (+b.dataset.d) * 360 / N; }));
+    // nyilak: pontosan egy termékkel lépnek tovább, simán odagördülve; utána pár másodpercig nem forog magától
+    $$('.sr-arrow').forEach((b) => FX.on(b, 'click', (e) => { e.preventDefault(); e.stopPropagation(); vel = 0; const base = target !== null ? target : Math.round(ang / STEP) * STEP; target = base + (+b.dataset.d) * STEP; pauseUntil = performance.now() + 4000; }));
     const show = (i) => { const p = P[i]; info.innerHTML = `<small>${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')} · ${esc(p.brand || p.cats[0] || '')}</small><h2>${esc(p.name)}</h2><b class="sr-price">${pft(p)}</b><div class="hero-cta"><a class="btn btn-gold" href="#/termek/${p.slug}">Részletek</a>${LX2.addBtn(p).replace('btn btn-gold', 'btn btn-ghost')}</div>`; };
     FX.tick(() => {
-      if (!drag) { vel += ((Math.abs(vel) < 0.04 ? 0.04 : vel) - vel) * 0.02; ang += vel; vel *= 0.985; }
+      if (target !== null) { ang += (target - ang) * 0.12; if (Math.abs(target - ang) < 0.04) { ang = target; target = null; } }
+      else if (!drag) { if (performance.now() < pauseUntil) vel = 0; else { vel += ((Math.abs(vel) < 0.04 ? 0.04 : vel) - vel) * 0.02; ang += vel; vel *= 0.985; } }
       ring.style.transform = `translateZ(${-R()}px) rotateY(${-ang}deg)`;
       items.forEach((it) => it.style.setProperty('--r', R() + 'px'));
       const f = ((Math.round(ang / (360 / N)) % N) + N) % N;
