@@ -450,3 +450,17 @@ body.has-logo .brand { font-family: var(--sans); font-weight: 800; font-size: 17
 .brand-tv { display: block; height: 44px; width: auto; aspect-ratio: 640 / 290; }
 .brand-tv-img { display: block; height: 52px; width: auto; }
 @media (max-width: 640px) { .brand-tv { height: 38px; } }
+
+/* ÜVEGES CSEMPE (config.glassTiles): a termékek áttetsző, felülről megvilágított üvegen „lebegnek” (a fehér háttér nélküli képek a lap sötétjébe olvadnak) */
+body.glass-tiles .card-img, body.glass-tiles .rc-img, body.glass-tiles .gallery .main { --mx: 50%; --my: 22%;
+  background: radial-gradient(circle 170px at var(--mx) var(--my), rgba(255,236,190,.20), transparent 72%), linear-gradient(180deg, rgba(255,244,222,.15) 0%, rgba(255,255,255,.035) 40%, rgba(255,255,255,.015) 64%, rgba(var(--accent-rgb), .07) 100%), linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  box-shadow: inset 0 1px 0 rgba(255,244,222,.34), inset 0 0 0 1px rgba(255,255,255,.07), inset 0 -30px 50px -30px rgba(var(--accent-rgb), .16); transition: box-shadow .4s; }
+body.glass-tiles .card-img::after, body.glass-tiles .rc-img::after, body.glass-tiles .gallery .main::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(118deg, transparent 28%, rgba(255,255,255,.07) 42%, transparent 56%); }
+body.glass-tiles .card-img img, body.glass-tiles .rc-img img, body.glass-tiles .gallery .main img { filter: drop-shadow(0 16px 20px rgba(0,0,0,.55)); }
+body.glass-tiles .card:hover .card-img { box-shadow: inset 0 1px 0 rgba(255,244,222,.6), inset 0 0 0 1px rgba(255,255,255,.12), inset 0 -30px 50px -30px rgba(var(--accent-rgb), .3), 0 0 40px -10px rgba(var(--accent-rgb), .35); }
+/* a tanács-kártya fotója nem vágódik le: egészben, üvegen áll */
+body.glass-tiles .advice .ph { position: relative; margin: 18px; border-radius: 20px; min-height: 380px; padding: 26px; background-size: contain; background-repeat: no-repeat; background-position: center; background-origin: content-box;
+  box-shadow: inset 0 1px 0 rgba(255,244,222,.34), inset 0 0 0 1px rgba(255,255,255,.07); }
+body.glass-tiles .advice .ph::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,244,222,.14), rgba(255,255,255,.02) 45%, rgba(var(--accent-rgb), .06)), linear-gradient(118deg, transparent 30%, rgba(255,255,255,.06) 44%, transparent 58%); }
+@media (max-width: 900px) { body.glass-tiles .advice .ph { min-height: 300px; margin: 14px; } }

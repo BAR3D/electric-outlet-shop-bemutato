@@ -75,6 +75,7 @@ LAYOUTS.showroom = function () {
       else if (!drag) { if (performance.now() < pauseUntil) vel = 0; else { vel += ((Math.abs(vel) < 0.04 ? 0.04 : vel) - vel) * 0.02; ang += vel; vel *= 0.985; } }
       ring.style.transform = `translateZ(${-R()}px) rotateY(${-ang}deg)`;
       items.forEach((it) => it.style.setProperty('--r', R() + 'px'));
+      items.forEach((it, i) => { const d = ((i * 360 / N - ang) % 360 + 540) % 360 - 180; it.style.setProperty('--lit', Math.pow(Math.max(0, Math.cos(d * Math.PI / 180)), 2).toFixed(2)); });   // a csempe fényessége a reflektor felé fordulással nő
       const f = ((Math.round(ang / (360 / N)) % N) + N) % N;
       if (f !== front) { front = f; items.forEach((it, i) => it.classList.toggle('on', i === f)); show(f); }
     });

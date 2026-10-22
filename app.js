@@ -848,6 +848,10 @@ function introStart() {
   SKINS.forEach(x => { x.img = img(x.img); });
   cart.load(); renderCart();
   document.body.classList.add('layout-' + LY());
+  if (C.glassTiles) {   // üveges, megvilágított csempék (config.glassTiles); az egér fénye végigsiklik a csempén
+    document.body.classList.add('glass-tiles');
+    addEventListener('pointermove', (e) => { const t = e.target.closest && e.target.closest('.card-img, .rc-img, .gallery .main'); if (!t) return; const r = t.getBoundingClientRect(); t.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%'); t.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%'); }, { passive: true });
+  }
   if (C.logoAnim) {
     const brands = $$('.brand'); if (brands[0]) brands[0].innerHTML = '<canvas class="brand-tv" role="img" aria-label="' + esc(C.name) + '"></canvas>';
     if (brands[1]) brands[1].innerHTML = '<img class="brand-tv-img" src="' + esc(C.logoAnim.full) + '" alt="' + esc(C.name) + '">';
