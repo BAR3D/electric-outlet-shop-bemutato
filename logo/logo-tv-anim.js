@@ -39,6 +39,8 @@
       const x0 = Math.ceil(scr.x + 8 * k), x1 = Math.floor(scr.x + scr.w - 8 * k), y0 = Math.ceil(scr.y + 8 * k), y1 = Math.floor(scr.y + scr.h - 8 * k);
       for (let y = y0; y < y1; y += step) for (let x = x0; x < x1; x += step) {
         const i = ((y | 0) * off.width + (x | 0)) * 4; if (!(d[i + 3] >= 200) || Math.max(d[i], d[i + 1], d[i + 2]) < 150) continue;
+        const hh = step * .45, ok = (px, py) => { const j = (((py | 0) * off.width) + (px | 0)) * 4; return d[j + 3] >= 190 && Math.max(d[j], d[j + 1], d[j + 2]) >= 140; };
+        if (!(ok(x - hh, y - hh) && ok(x + hh, y - hh) && ok(x - hh, y + hh) && ok(x + hh, y + hh))) continue;   // csak a betű belseje: nem lóg ki semmi
         pts.push({ x, y, c: [d[i], d[i + 1], d[i + 2]] });
       }
       const cx = scr.x + scr.w / 2, cy = scr.y + scr.h / 2;
@@ -52,13 +54,13 @@
       if (!visible || paused) { off0 = now; return; }
       if (!t0) t0 = now; if (off0) { t0 += now - off0; off0 = 0; }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-      if (!loop && (finished || reduce || (now - t0) / 1000 >= A + .6)) { finished = true; ctx.drawImage(full, 0, 0, W, H); return; }   // kész: a teljes logó, több képkocka nem kell
+      if (!loop && (finished || reduce || (now - t0) / 1000 >= A + .05)) { finished = true; ctx.drawImage(full, 0, 0, W, H); return; }   // kész: a teljes logó, több képkocka nem kell
       const t = reduce ? T_HOLD - 0.5 : ((now - t0) / 1000) % CYCLE;
       ctx.drawImage(frame, 0, 0, W, H);                          // a TV (keret, képernyő, állvány) – felirat nélkül
       ctx.save(); screenPath(ctx); ctx.clip();
       if (t < T_FLASH) { ctx.fillStyle = `rgba(255,255,255,${.5 * (1 - t / T_FLASH)})`; ctx.fillRect(scr.x, scr.y, scr.w, scr.h); }   // bekapcsolás villanása
       else if (t < T_END) {
-        const asm = clamp((t - T_FLASH) / (A - T_FLASH)), hold = clamp((t - A) / .5), out = clamp((t - T_HOLD) / (T_END - T_HOLD));
+        const asm = clamp((t - T_FLASH) / (A - T_FLASH)), hold = clamp((t - (A - .4)) / .35), out = clamp((t - T_HOLD) / (T_END - T_HOLD));
         for (const p of P) {
           let x, y, a, sz = p.s, white;
           if (out > 0) { const q = easeIn(clamp((out - p.de * .5) / (1 - p.de * .5))); x = p.tx + (p.ex - p.tx) * q; y = p.ty + (p.ey - p.ty) * q; a = 1 - q; white = 0; }

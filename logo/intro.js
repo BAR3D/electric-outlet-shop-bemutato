@@ -96,7 +96,10 @@
       const lw = W * .6, lh = lw * (logo.naturalHeight / logo.naturalWidth); logoBox = { x: (W - lw) / 2, y: (H - lh) / 2, w: lw, h: lh };
       const off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d', { willReadFrequently: true }); o.drawImage(logo, logoBox.x, logoBox.y, logoBox.w, logoBox.h);
       const d = o.getImageData(0, 0, W, H).data, step = Math.max(1.6, W / 540), pts = [];
-      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { const i = ((y | 0) * W + (x | 0)) * 4; if (!(d[i + 3] >= 215)) continue; pts.push({ x: x + step / 2, y: y + step / 2, c: [d[i], d[i + 1], d[i + 2]], cs: `rgb(${d[i]},${d[i + 1]},${d[i + 2]})` }); }
+      const al = (px, py) => d[(((Math.min(H - 1, Math.max(0, py)) | 0) * W) + (Math.min(W - 1, Math.max(0, px)) | 0)) * 4 + 3], hh = step * .45;
+      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { const cx = x + step / 2, cy = y + step / 2, i = ((cy | 0) * W + (cx | 0)) * 4;
+        if (!(al(cx, cy) >= 235 && al(cx - hh, cy - hh) >= 200 && al(cx + hh, cy - hh) >= 200 && al(cx - hh, cy + hh) >= 200 && al(cx + hh, cy + hh) >= 200)) continue;   // a szélső cellák kimaradnak: nem lóg ki semmi a betűből
+        pts.push({ x: cx, y: cy, c: [d[i], d[i + 1], d[i + 2]], cs: `rgb(${d[i]},${d[i + 1]},${d[i + 2]})` }); }
       P = pts.map((p) => { const a = Math.random() * Math.PI * 2, far = rnd(.08, .5) * Math.max(W, H);
         return { tx: p.x, ty: p.y, c: p.c, cs: p.cs, s: Math.max(1, step * .7), sx: clamp(W / 2 + Math.cos(a) * far, -20, W + 20), sy: clamp(H / 2 + Math.sin(a) * far * .34, -20, H + 20), da: (p.x / W) * .55 + Math.random() * .3, ph: Math.random() * 6.28 }; });
     }
@@ -129,7 +132,7 @@
         const g = ctx.createLinearGradient(W / 2 - w / 2, 0, W / 2 + w / 2, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = g; ctx.fillRect(W / 2 - w / 2, H / 2 - h / 2, w, h); lum = .12 * k; }
       else if (t >= T.asm0) {
-        const asm = clamp((t - T.asm0) / (T.asm1 - T.asm0)), hold = clamp((t - T.asm1) / .55); let lit = 0;
+        const asm = clamp((t - T.asm0) / (T.asm1 - T.asm0)), hold = clamp((t - (T.asm1 - .5)) / .4); let lit = 0;   // az éles felirat már akkor átúszik, amikor a pontok nagy része a helyén van
         const bgG = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * .6); bgG.addColorStop(0, 'rgba(255,194,26,.10)'); bgG.addColorStop(1, 'rgba(255,194,26,0)'); ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
         for (const p of P) { const q = easeOut(clamp((asm - p.da * .55) / .45)), w = (1 - q) * 6 * RES; lit += q;
           const x = p.sx + (p.tx - p.sx) * q + Math.sin(now / 160 + p.ph) * w, y = p.sy + (p.ty - p.sy) * q + Math.cos(now / 190 + p.ph) * w, a = (.02 + .98 * Math.pow(q, 1.7)) * (.82 + .18 * Math.sin(now / 90 + p.ph)), wh = (1 - q) * .5;

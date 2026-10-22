@@ -820,7 +820,7 @@ function logoAnimMount(cv) {
   if (!cv || !C.logoAnim) return;
   if (window.EOLogoTV) return EOLogoTV.mount(cv, C.logoAnim);
   logoAnimQ.push(cv);
-  if (!document.getElementById('logoAnimJs')) { const sc = document.createElement('script'); sc.id = 'logoAnimJs'; sc.src = C.logoAnim.js; sc.onload = () => logoAnimQ.splice(0).forEach((c) => EOLogoTV.mount(c, C.logoAnim)); document.head.appendChild(sc); }
+  if (!document.getElementById('logoAnimJs')) { const sc = document.createElement('script'); sc.id = 'logoAnimJs'; sc.src = C.logoAnim.js + '?v=' + (C.version || ''); sc.onload = () => logoAnimQ.splice(0).forEach((c) => EOLogoTV.mount(c, C.logoAnim)); document.head.appendChild(sc); }
 }
 
 /* ---------- nyitóanimáció (config.intro = { js, full }) ---------- */
@@ -832,8 +832,8 @@ function introStart() {
   try { sessionStorage.setItem('eoIntro', '1'); } catch { /* nincs tár */ }
   const cover = document.createElement('div'); cover.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99998'; document.body.appendChild(cover);   // addig takar, amíg a nyitóréteg fel nem épül
   const rm = () => cover.remove(); setTimeout(rm, 4000);
-  const sc = document.createElement('script'); sc.src = I.js; sc.onerror = rm;
-  sc.onload = () => { EOIntro.run({ full: I.full, onDone: rm }); const w = () => (document.querySelector('.eo-intro') ? rm() : requestAnimationFrame(w)); w(); };
+  const sc = document.createElement('script'); const vq = '?v=' + (C.version || Date.now()); sc.src = I.js + vq; sc.onerror = rm;
+  sc.onload = () => { EOIntro.run({ full: I.full + vq, onDone: rm }); const w = () => (document.querySelector('.eo-intro') ? rm() : requestAnimationFrame(w)); w(); };
   document.head.appendChild(sc);
 }
 
