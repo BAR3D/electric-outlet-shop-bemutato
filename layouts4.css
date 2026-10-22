@@ -55,7 +55,7 @@
 .sr-head h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 4.2vw, 60px); line-height: 1.04; max-width: 20ch; }
 .sr-scene { position: absolute; left: 50%; top: 56%; width: 0; height: 0; transform-style: preserve-3d; }
 .sr-ring { position: absolute; transform-style: preserve-3d; will-change: transform; }
-.sr-it { --r: 500px; position: absolute; left: -110px; top: -150px; width: 220px; height: 220px; transform: rotateY(var(--a)) translateZ(var(--r)); border-radius: 18px; background: radial-gradient(circle at 50% 40%, #fff, #e9e9ee); box-shadow: 0 30px 60px -20px rgba(0,0,0,.8); transition: box-shadow .4s, filter .4s; filter: brightness(.55); -webkit-box-reflect: below 14px linear-gradient(transparent 55%, rgba(0,0,0,.35)); }
+.sr-it { --r: 500px; position: absolute; left: -110px; top: -150px; width: 220px; height: 220px; transform: rotateY(var(--a)) translateZ(var(--r)); border-radius: 18px; background: radial-gradient(circle at 50% 40%, #fff, #e9e9ee); box-shadow: 0 30px 60px -20px rgba(0,0,0,.8); transition: box-shadow .4s, filter .4s; filter: brightness(.55); }
 .sr-it img { width: 100%; height: 100%; object-fit: contain; padding: 18px; pointer-events: none; }
 .sr-it.on { filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 80px rgba(var(--accent-rgb), .55); }
 .sr-arrow { position: absolute; top: 56%; z-index: 4; width: 54px; height: 54px; margin-top: -27px; border-radius: 50%; border: 1px solid var(--line-2); background: rgba(0,0,0,.4); color: var(--ink); font-size: 28px; cursor: pointer; backdrop-filter: blur(8px); }
@@ -243,6 +243,8 @@
 @media (max-width: 760px) { .ar-card { width: 150px; left: 40px; } .ar-spot.flip .ar-card { right: 40px; } .ar-card img { height: 60px; } .ar-tr { display: none; } }
 
 @media (prefers-reduced-motion: reduce) { .sr-spot, .ar-scanl, .ar-ring, .dr-front a, .tr-dim path, .tr-dim circle { animation: none !important; } .tr-dim path, .tr-dim circle { stroke-dashoffset: 0; } }
+/* tükörkép a padlón: a csempe megfordított másolata (a böngésző beépített box-reflect hatása forgó 3D-rétegeken eltűnt és visszaugrott) */
+.sr-rf { position: absolute; left: 0; top: calc(100% + 14px); width: 100%; height: 100%; box-sizing: border-box; overflow: hidden; border-radius: inherit; background: inherit; border: inherit; transform: scaleY(-1); pointer-events: none; -webkit-mask-image: linear-gradient(transparent 55%, rgba(0,0,0,.35)); mask-image: linear-gradient(transparent 55%, rgba(0,0,0,.35)); }
 /* ÜVEGES CSEMPE a showroomban: maga a csempe (és a tükörképe) állandó marad; a reflektorok fénye külön réteg (.sr-lt), amit a videókártya keveri – így nincs villogás */
 .sr-lt { display: none; }
 body.glass-tiles .sr-it { background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.02)), linear-gradient(180deg, rgba(255,242,215,.10), rgba(255,255,255,.03) 42%, rgba(var(--accent-rgb), .05));

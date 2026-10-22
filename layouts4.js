@@ -88,7 +88,7 @@ LAYOUTS.showroom = function () {
   return `<div class="lx2 srm">
     <section class="sr-stage"><div class="sr-spot s1"></div><div class="sr-spot s2"></div><div class="sr-spot s3"></div><div class="sr-floor"></div>
       <div class="sr-head wrap"><span class="sec-num">◢ SHOWROOM · ${esc(C.name)}</span><h1 data-split="c">${fill(C.hero.title)}</h1></div>
-      <div class="sr-scene"><div class="sr-ring">${P.map((p) => `<a class="sr-it" href="#/termek/${p.slug}" draggable="false"><img src="${pimg(p)}" alt="" draggable="false" decoding="async"></a>`).join('')}${P.map(() => '<i class="sr-lt" aria-hidden="true"></i>').join('')}</div></div>
+      <div class="sr-scene"><div class="sr-ring">${P.map((p) => `<a class="sr-it" href="#/termek/${p.slug}" draggable="false"><img src="${pimg(p)}" alt="" draggable="false" decoding="async"><span class="sr-rf" aria-hidden="true"><img src="${pimg(p)}" alt="" draggable="false" decoding="async"></span></a>`).join('')}${P.map(() => '<i class="sr-lt" aria-hidden="true"></i>').join('')}</div></div>
       <button class="sr-arrow l" data-d="-1" aria-label="Előző">‹</button><button class="sr-arrow r" data-d="1" aria-label="Következő">›</button>
       <div class="sr-info"></div><small class="sr-hint muted">húzd oldalra – forgasd a pódiumot</small></section>
     <section class="sec wrap"><div class="sr-lines">${SKINS.slice(0, 8).map((s) => `<a href="#/${NR}/${s.k}" style="background-image:url(${s.img})"><span><b>${esc(s.name)}</b><small>${LX.needN(s)} modell</small></span></a>`).join('')}</div></section>
